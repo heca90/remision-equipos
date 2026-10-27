@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remisión de Equipos</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background: linear-gradient(135deg, #b30000 0%, #1a0000 100%); 
+            padding: 20px; 
+            min-height: 100vh;
+            color: #fff;
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: #1a1a1a; 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.8); 
+            border: 1px solid #333;
+        }
+        h1 { text-align: center; color: #fff; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        label { font-weight: bold; display: block; margin-bottom: 8px; color: #ddd; }
+        select, input[type="text"], input[type="number"] { 
+            width: 100%; 
+            padding: 12px; 
+            font-size: 16px; 
+            border-radius: 4px; 
+            border: 1px solid #555; 
+            box-sizing: border-box;
+            background-color: #2b2b2b;
+            color: #fff;
+        }
+        select:focus, input:focus { outline: none; border-color: #4CAF50; }
+        .row { display: flex; gap: 15px; }
+        .col-8 { flex: 8; }
+        .col-4 { flex: 4; }
+        button { background-color: #4CAF50; color: white; border: none; padding: 15px 20px; font-size: 16px; cursor: pointer; border-radius: 5px; width: 100%; font-weight: bold; }
+        button:hover { background-color: #45a049; }
+        .btn-secondary { background-color: #008CBA; }
+        .btn-secondary:hover { background-color: #007bb5; }
+        #message { margin-top: 20px; padding: 15px; border-radius: 5px; text-align: center; font-weight: bold; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div style="text-align: center; margin-bottom: 20px;">
+        <img src="https://www.rla-latam.com/images/Logo_RLA2_BLANCO.png" alt="RLA Logo" style="max-width: 180px;">
+    </div>
+    <h1>Listado Equipos Eventos Corporativos</h1>
+    
+    <div class="form-group">
+        <label for="categoria">1. Grupo (Categoría):</label>
+        <select id="categoria" onchange="verificarSubcategoria()">
+            <option value="">-- Selecciona una opción --</option>
+            <option value="SONIDO">SONIDO</option>
+            <option value="VIDEO">VIDEO</option>
+            <option value="ILUMINACION Y ESTRUCTURA">ILUMINACIÓN Y ESTRUCTURA</option>
+            <option value="CABLEADO  ACCESORIOS Y OTROS">CABLEADO  ACCESORIOS Y OTROS</option>
+            <option value="PANTALLA LED">PANTALLA LED</option>
+        </select>
+    </div>
+
+    <div class="form-group hidden" id="div-subcategoria">
+        <label for="subcategoria" id="label-subcategoria">Subcategoría:</label>
+        <select id="subcategoria" onchange="verificarDimensiones()">
+            <!-- Las opciones se inyectan con JavaScript -->
+        </select>
+    </div>
+
+    <div class="row form-group hidden" id="div-dimensiones">
+        <div class="col-8" style="display: flex; gap: 10px;">
+            <div style="flex: 1;">
+                <label id="lbl-horizontal" for="dim-horizontal">Ancho / Horizontal (metros):</label>
+                <input type="number" id="dim-horizontal" step="0.5" min="0.5" placeholder="Ej. 3" oninput="calcularFormulas()">
+            </div>
+            <div style="flex: 1;" id="div-vertical-container">
+                <label for="dim-vertical">Vertical (metros):</label>
+                <input type="number" id="dim-vertical" step="0.5" min="0.5" placeholder="Ej. 2" oninput="calcularFormulas()">
+            </div>
+        </div>
+    </div>
+
+    <div class="row form-group hidden" id="div-tipo-ensamble">
+        <div class="col-8">
+            <label for="tipo-ensamble">¿A qué altura será ensamblada la pantalla?</label>
+            <select id="tipo-ensamble" onchange="calcularFormulas()">
+                <option value="tarima">Sobre tarima</option>
+                <option value="inferior">Elevada a una altura de 50 cm o inferior</option>
+                <option value="superior">Elevada a una altura superior a 60 cm</option>
+                <option value="ninguna">Ninguna / No requiere</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="row form-group hidden" id="div-tipo-pitch">
+        <div class="col-8">
+            <label for="tipo-pitch-cable">Seleccione el Pitch de la pantalla:</label>
+            <select id="tipo-pitch-cable" onchange="calcularFormulas()">
+                <option value="2.9">Pitch 2.9</option>
+                <option value="2.6">Pitch 2.6</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="row form-group">
+        <div class="col-8">
+            <label for="equipo">2. Descripción del Equipo:</label>
+            <input type="text" id="equipo" placeholder="Ej. Micrófono Inalámbrico Shure" autocomplete="off">
+        </div>
+        <div class="col-4">
+            <label for="cantidad">3. Cantidad:</label>
+            <input type="number" id="cantidad" min="1" value="1">
+        </div>
+    </div>
+
+    <div class="row" style="margin-top: 15px;">
+        <button onclick="enviarDatos()" style="flex: 2;">Guardar en Excel</button>
+        <button onclick="abrirExcel()" class="btn-secondary" style="flex: 1;">Vista Previa</button>
+        <button onclick="descargarExcel()" class="btn-secondary" style="flex: 1; background-color: #e67e22;">Descargar</button>
+    </div>
+
+    <div id="message" class="hidden"></div>
+
+    <hr style="margin: 30px 0; border: 0; border-top: 1px solid #ccc;">
+
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="color: #fff; margin: 0;">Equipos Registrados</h2>
+        <button onclick="cargarTabla()" class="btn-secondary" style="width: auto; padding: 10px 15px;">🔄 Refrescar Tabla</button>
+    </div>
+    
+    <div id="tabla-container" style="margin-top: 15px;">
+        <!-- Aquí se dibujará la tabla con JS -->
+    </div>
+    
+    <div class="row" style="margin-top: 20px;">
+        <button onclick="toggleEmailForm()" class="col-12" style="background-color: #007bff; color: white; margin-bottom: 10px;">✉️ Enviar Listado</button>
+    </div>
+    
+    <div id="email-form" class="hidden" style="margin-bottom: 20px; padding: 15px; border: 1px solid #555; border-radius: 5px; background-color: #2b2b2b;">
+        <h3 style="margin-top: 0; color: #fff;">Enviar Excel por Correo</h3>
+        <div class="form-group">
+            <label for="email-remitente">Remitente:</label>
+            <input type="text" id="email-remitente" placeholder="Tu correo electrónico">
+        </div>
+        <div class="form-group">
+            <label for="email-password">Contraseña de Aplicación Gmail:</label>
+            <input type="password" id="email-password" placeholder="Clave de 16 letras generada por Google">
+            <small style="color: #aaa;">No uses tu clave normal, debes crear una <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color: #4CAF50;">Contraseña de Aplicación</a>.</small>
+        </div>
+        <div class="form-group">
+            <label for="email-destinatario">Destinatario:</label>
+            <input type="text" id="email-destinatario" placeholder="Correo de destino">
+        </div>
+        <div class="form-group">
+            <label for="email-asunto">Asunto:</label>
+            <input type="text" id="email-asunto" placeholder="Asunto del correo">
+        </div>
+        <div class="row">
+            <button onclick="enviarCorreo()" class="col-12" style="background-color: #4CAF50; color: white;">🚀 Enviar Correo Ahora</button>
+        </div>
+    </div>
+
+    <div class="row" style="margin-top: 10px;">
+        <button onclick="borrarListado()" class="col-12" style="background-color: #d9534f; color: white;">🗑 Borrar Todo el Listado</button>
+    </div>
+</div>
+
+<script>
+    // Cargar la tabla apenas se abre la página
+    window.onload = function() {
+        cargarTabla();
+    };
+
+    function toggleEmailForm() {
+        const form = document.getElementById("email-form");
+        if (form.classList.contains("hidden")) {
+            form.classList.remove("hidden");
+        } else {
+            form.classList.add("hidden");
+        }
+    }
+    
+    async function enviarCorreo() {
+        const remitente = document.getElementById("email-remitente").value.trim();
+        const password = document.getElementById("email-password").value.trim();
+        const destinatario = document.getElementById("email-destinatario").value.trim();
+        const asunto = document.getElementById("email-asunto").value.trim();
+        
+        if (!remitente || !password || !destinatario || !asunto) {
+            showMessage("Por favor llena todos los campos, incluyendo la contraseña.", false);
+            return;
+        }
+        
+        showMessage("Enviando correo por Gmail... por favor espera.", true);
+        
+        try {
+            const response = await fetch('/enviar-correo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    remitente: remitente,
+                    password: password,
+                    destinatario: destinatario,
+                    asunto: asunto
+                })
+            });
+            
+            const result = await response.json();
+            if (response.ok) {
+                showMessage("✅ ¡Correo enviado exitosamente con el Excel adjunto!", true);
+                document.getElementById("email-form").classList.add("hidden"); // Ocultar form
+            } else {
+                showMessage("❌ Error: " + result.detail, false);
+            }
+        } catch (error) {
+            showMessage("❌ Error al intentar conectar con el servidor.", false);
+            console.error(error);
+        }
+    }
+
+    async function borrarListado() {
+        if (!confirm("¿Estás seguro de que quieres borrar todo el listado de Excel? Esta acción no se puede deshacer.")) {
+            return;
+        }
+        
+        try {
+            const response = await fetch('/borrar-listado', { method: 'POST' });
+            const resData = await response.json();
+            if (response.ok) {
+                showMessage("Listado borrado exitosamente.", true);
+                cargarTabla(); // Refrescar la tabla para que se vea vacía
+            } else {
+                showMessage("Error al borrar el listado: " + (resData.detail || "Verifica que el archivo Excel no esté abierto."), false);
+            }
+        } catch (error) {
+            console.error("Error al borrar", error);
+            showMessage("Error de conexión al intentar borrar.", false);
+        }
+    }
+
+    async function cargarTabla() {
+        try {
+            const response = await fetch('/equipos');
+            if (response.ok) {
+                const data = await response.json();
+                dibujarTabla(data);
+            }
+        } catch (error) {
+            console.error("Error al cargar la tabla", error);
+        }
+    }
+
+    function dibujarTabla(data) {
+        const container = document.getElementById('tabla-container');
+        container.innerHTML = '';
+
+        for (const [categoria, equipos] of Object.entries(data)) {
+            if (equipos.length === 0) continue;
+
+            const table = document.createElement('table');
+            table.style.width = '100%';
+            table.style.borderCollapse = 'collapse';
+            table.style.marginBottom = '20px';
+            table.style.backgroundColor = '#2b2b2b'; table.style.color = '#fff';
+
+            const thead = document.createElement('thead');
+            thead.innerHTML = `
+                <tr style="background-color: #111;">
+                    <th colspan="2" style="padding: 10px; text-align: left; border: 1px solid #444; color: #4CAF50;">${categoria}</th>
+                </tr>
+                <tr style="background-color: #222;">
+                    <th style="padding: 8px; text-align: left; border: 1px solid #444; width: 70%;">Equipo</th>
+                    <th style="padding: 8px; text-align: center; border: 1px solid #444; width: 30%;">Cantidad</th>
+                </tr>
+            `;
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            equipos.forEach(eq => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="padding: 8px; border: 1px solid #444;">${eq.equipo}</td>
+                    <td style="padding: 8px; text-align: center; border: 1px solid #444;">${eq.cantidad}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+            container.appendChild(table);
+        }
+
+        if (container.innerHTML === '') {
+            container.innerHTML = '<p style="text-align:center; color:#777;">No hay equipos registrados todavía.</p>';
+        }
+    }
+    function verificarSubcategoria() {
+        const categoria = document.getElementById("categoria").value;
+        const divSubcategoria = document.getElementById("div-subcategoria");
+        const selectSub = document.getElementById("subcategoria");
+        const labelSub = document.getElementById("label-subcategoria");
+        
+        selectSub.innerHTML = '<option value="">-- General (Sin subcategoría) --</option>';
+
+        if (categoria === "VIDEO") {
+            labelSub.textContent = "Subcategoría de Video:";
+            selectSub.innerHTML += `
+                <option value="[Atril con pantalla | Podio interactivo]">Atril con pantalla | Podio interactivo</option>
+                <option value="[Capturadora de Video AV Media]">Capturadora de Video AV Media</option>
+                <option value="[Capturadora de Video El Gato]">Capturadora de Video El Gato</option>
+                <option value="[Computador Portatil Asus Gamer A16]">Computador Portatil Asus Gamer A16</option>
+                <option value="[Computador Portatil Asus Gamer F15]">Computador Portatil Asus Gamer F15</option>
+                <option value="[Computador Portatil Macbook Pro]">Computador Portatil Macbook Pro</option>
+                <option value="[Computador Portatil Windows Sencillo]">Computador Portatil Windows Sencillo</option>
+                <option value="[Consola De Video Roland V-1HD]">Consola De Video Roland V-1HD</option>
+                <option value="[Control Box Ascender]">Control Box Ascender</option>
+                <option value="[Convertidor De HDMI to SDI]">Convertidor De HDMI to SDI</option>
+                <option value="[Convertidor KDOCK-5]">Convertidor KDOCK-5</option>
+                <option value="[Distribuidor de Señal HDMI]">Distribuidor de Señal HDMI</option>
+                <option value="[Fibra 4 Puntas con Convertidores Hdmi]">Fibra 4 Puntas con Convertidores Hdmi</option>
+                <option value="[Fibra HDMI 4K 100 mts]">Fibra HDMI 4K 100 mts</option>
+                <option value="[Fibra HDMI 4K de 50 mts]">Fibra HDMI 4K de 50 mts</option>
+                <option value="[Imac Pro gris Raton]">Imac Pro gris Raton</option>
+                <option value="[Imac Pro Negro]">Imac Pro Negro</option>
+                <option value="[Mac Studio Pro]">Mac Studio Pro</option>
+                <option value="[Presentador Inalámbrico Logitech]">Presentador Inalámbrico Logitech</option>
+                <option value="[Presentador Inalámbrico Perfect Cue]">Presentador Inalámbrico Perfect Cue</option>
+                <option value="[Procesador de video ASCENDER | Analogway]">Procesador de video ASCENDER | Analogway</option>
+                <option value="[Procesador de video LOE | Analogway]">Procesador de video LOE | Analogway</option>
+                <option value="[TV de 19&quot;]">TV de 19"</option>
+                <option value="[TV de 28&quot;]">TV de 28"</option>
+                <option value="[TV de 48&quot;]">TV de 48"</option>
+                <option value="[TV de 50&quot;]">TV de 50"</option>
+                <option value="[TV de 55&quot;]">TV de 55"</option>
+                <option value="[TV de 65&quot;]">TV de 65"</option>
+                <option value="[TV de 70&quot;]">TV de 70"</option>
+            `;
+            divSubcategoria.classList.remove("hidden");
+        } else if (categoria === "CABLEADO  ACCESORIOS Y OTROS") {
+            labelSub.textContent = "Subcategoría de Cableado:";
+            selectSub.innerHTML += `
+                <option value="[Alargue de 32 Amp 110v 220v]">Alargue de 32 Amp 110v 220v</option>
+                <option value="[Alargue de 32 Amp 220v]">Alargue de 32 Amp 220v</option>
+                <option value="[Cable Audio Pc]">Cable Audio Pc</option>
+                <option value="[Cable de Antena Microfono VNC]">Cable de Antena Microfono VNC</option>
+                <option value="[Cable de señal Pantalla 20 mts]">Cable de señal Pantalla 20 mts</option>
+                <option value="[Cable HDMI 1 mts]">Cable HDMI 1 mts</option>
+                <option value="[Cable HDMI 10 mts]">Cable HDMI 10 mts</option>
+                <option value="[Cable HDMI 15 mts]">Cable HDMI 15 mts</option>
+                <option value="[Cable HDMI 2 mts]">Cable HDMI 2 mts</option>
+                <option value="[Cable HDMI 20 mts]">Cable HDMI 20 mts</option>
+                <option value="[Cable HDMI 3 mts]">Cable HDMI 3 mts</option>
+                <option value="[Cable HDMI 5 mts]">Cable HDMI 5 mts</option>
+                <option value="[Cable XLR 1 mts]">Cable XLR 1 mts</option>
+                <option value="[Cable XLR 10 mts]">Cable XLR 10 mts</option>
+                <option value="[Cable XLR 2 mts]">Cable XLR 2 mts</option>
+                <option value="[Cable XLR 20 mts]">Cable XLR 20 mts</option>
+                <option value="[Cable XLR 3 mts]">Cable XLR 3 mts</option>
+                <option value="[Cable XLR 5 mts]">Cable XLR 5 mts</option>
+                <option value="[Distribuidor de corriente]">Distribuidor de corriente</option>
+                <option value="[Parcial de 64 AMP]">Parcial de 64 AMP</option>
+                <option value="[Puente powercom pantalla LED]">Puente powercom pantalla LED</option>
+                <option value="[Puente señal pantalla LED]">Puente señal pantalla LED</option>
+                <option value="[Pulpo de Corriente Pantalla Led]">Pulpo de Corriente Pantalla Led</option>
+                <option value="[Regleta Electrica Bocadillo 120-220v  32amp]">Regleta Electrica Bocadillo 120-220v  32amp</option>
+            `;
+            divSubcategoria.classList.remove("hidden");
+        } else if (categoria === "ILUMINACION Y ESTRUCTURA") {
+            labelSub.textContent = "Subcategoría de Estructura:";
+            selectSub.innerHTML += `
+                <option value="[Base truss]">Base truss</option>
+                <option value="[Bomper Pantalla led 1mts]">Bomper Pantalla led 1mts</option>
+                <option value="[Bomper Pantalla Led 50 cms]">Bomper Pantalla Led 50 cms</option>
+                <option value="[Chaco]">Chaco</option>
+                <option value="[Eslinga 1mts]">Eslinga 1mts</option>
+                <option value="[Eslinga 2mts]">Eslinga 2mts</option>
+                <option value="[Eslinga 3mts]">Eslinga 3mts</option>
+                <option value="[Hamburguesa en U]">Hamburguesa en U</option>
+                <option value="[Mosqueton en D en acero]">Mosqueton en D en acero</option>
+                <option value="[Planchon Metalico]">Planchon Metalico</option>
+                <option value="[Truss de 1 mts]">Truss de 1 mts</option>
+                <option value="[Truss de 2 mts]">Truss de 2 mts</option>
+                <option value="[Truss de 3 mts]">Truss de 3 mts</option>
+                <option value="[Tubo cuadrado 2mts]">Tubo cuadrado 2mts</option>
+                <option value="[Tubo Cuadrado 3mts]">Tubo Cuadrado 3mts</option>
+            `;
+            divSubcategoria.classList.remove("hidden");
+        } else if (categoria === "SONIDO") {
+            labelSub.textContent = "Subcategoría de Sonido:";
+            selectSub.innerHTML += `
+                <option value="[Antena de RF Shure]">Antena de RF Shure</option>
+                <option value="[Bose L1 compac]">Bose L1 compac</option>
+                <option value="[Bose Pro 16]">Bose Pro 16</option>
+                <option value="[Bose Pro 8]">Bose Pro 8</option>
+                <option value="[Caja Directa]">Caja Directa</option>
+                <option value="[Caja de Prensa]">Caja de Prensa</option>
+                <option value="[Consola de audio Behringer X32 Compact]">Consola de audio Behringer X32 Compact</option>
+                <option value="[Consola de audio Yamaha dm3]">Consola de audio Yamaha dm3</option>
+                <option value="[Distribuidor de Antenas]">Distribuidor de Antenas</option>
+                <option value="[Loe Behringer]">Loe Behringer</option>
+                <option value="[Microfono cuello Ganzo]">Microfono cuello Ganzo</option>
+                <option value="[Microfono de mano inalambrico shure]">Microfono de mano inalambrico shure</option>
+                <option value="[Microfono solapa inalambrico shure]">Microfono solapa inalambrico shure</option>
+                <option value="[Tio Yamaha]">Tio Yamaha</option>
+            `;
+            divSubcategoria.classList.remove("hidden");
+                } else if (categoria === "PANTALLA LED") {
+            labelSub.textContent = "Subcategoría de Pantalla LED:";
+            selectSub.innerHTML += `
+                <option value="[Armado Completo de Pantalla] *">✨ Armado Completo de Pantalla ✨</option>
+                <option value="[Brazos Extensores de 2.5 mts]">Brazos Extensores de 2.5 mts</option>
+                <option value="[Contrapesos de pantalla]">Contrapesos de pantalla</option>
+                <option value="[Escalerilla estructura pantalla]">Escalerilla estructura pantalla</option>
+                <option value="[Hamburguesa Pantalla pitch 2.6]">Hamburguesa Pantalla pitch 2.6</option>
+                <option value="[Hamburguesa Pantalla pitch 2.9]">Hamburguesa Pantalla pitch 2.9</option>
+                <option value="[Pantalla LED Pitch 2.6]">Pantalla LED Pitch 2.6</option>
+                <option value="[Pantalla LED Pitch 2.9]">Pantalla LED Pitch 2.9</option>
+                <option value="[Patas estructura pantalla]">Patas estructura pantalla</option>
+                <option value="[Procesador de video NovaStar MCTRL 4K]">Procesador de video NovaStar MCTRL 4K</option>
+                <option value="[Procesador de video NovaStar MCTRL660]">Procesador de video NovaStar MCTRL660</option>
+                <option value="[Procesador de video NovaStar VX2000 Pro]">Procesador de video NovaStar VX2000 Pro</option>
+                <option value="[Procesador de video NovaStar VX600 Pro]">Procesador de video NovaStar VX600 Pro</option>
+                <option value="[Tornillos Pantalla led]">Tornillos Pantalla led</option>
+            `;
+            divSubcategoria.classList.remove("hidden");
+        } else {
+            divSubcategoria.classList.add("hidden");
+            document.getElementById("subcategoria").value = "";
+        }
+        verificarDimensiones();
+    }
+
+    function verificarDimensiones() {
+        const subcat = document.getElementById("subcategoria").value;
+        const divDim = document.getElementById("div-dimensiones");
+        const esCable20m = subcat.toLowerCase().includes("cable") && subcat.includes("20");
+        const esPulpo = subcat.toLowerCase().includes("pulpo");
+        const esBrazo = subcat.toLowerCase().includes("brazos");
+        const esHamburguesaPitch = subcat.toLowerCase().includes("hamburguesa pantalla pitch");
+        const esArmado = subcat.includes("Armado Completo");
+
+        if (subcat.toLowerCase().includes("pitch") || subcat.toLowerCase().includes("puente") || subcat.toLowerCase().includes("patas") || subcat.toLowerCase().includes("escalerilla") || esCable20m || esPulpo || esBrazo || esHamburguesaPitch || esArmado) {
+            divDim.classList.remove("hidden");
+
+            if (subcat.toLowerCase().includes("escalerilla") || esHamburguesaPitch || esArmado) {
+                document.getElementById("div-tipo-ensamble").classList.remove("hidden");
+            } else {
+                document.getElementById("div-tipo-ensamble").classList.add("hidden");
+            }
+
+            if (esCable20m || esArmado) {
+                document.getElementById("div-tipo-pitch").classList.remove("hidden");
+            } else {
+                document.getElementById("div-tipo-pitch").classList.add("hidden");
+            }
+            
+            if (esArmado) {
+                document.getElementById("equipo").value = "Kit de Pantalla LED (Auto-Calculado)";
+                document.getElementById("equipo").readOnly = true;
+                document.getElementById("cantidad").readOnly = true;
+            }
+            calcularFormulas(); // Calcular en caso de que ya haya números
+        } else {
+            divDim.classList.add("hidden");
+            document.getElementById("div-tipo-ensamble").classList.add("hidden");
+            document.getElementById("div-tipo-pitch").classList.add("hidden");
+            document.getElementById("dim-horizontal").value = "";
+            document.getElementById("dim-vertical").value = "";
+            // Restaurar equipo y cantidad a estado normal si cambiamos de categoría
+            const equipoActual = document.getElementById("equipo").value;
+            if (!equipoActual.toLowerCase().includes("racks de pantalla") && !equipoActual.toLowerCase().includes("puente") && !equipoActual.toLowerCase().includes("patas") && !equipoActual.toLowerCase().includes("escalerilla") && !equipoActual.toLowerCase().includes("microfono")) {
+                document.getElementById("cantidad").readOnly = false;
+            }
+            
+            const autoCompKeys = ["microfono", "Microfono", "Bose", "Consola", "Loe", "Tio", "Caja", "Antena", "Distribuidor", "Procesador", "Computador", "Imac", "Mac", "Presentador", "Capturadora", "Fibra", "Convertidor", "Truss", "Base", "Bomper", "Chaco", "Eslinga", "Mosqueton", "Hamburguesa", "Tubo", "Atril", "TV", "Control", "Cable", "Pulpo", "Parcial", "Alargue", "Brazos", "Tornillos", "Contrapeso", "Regleta", "Planchon"];
+            const isAutoComp = autoCompKeys.some(k => subcat.includes(k));
+            const wasAutoComp = autoCompKeys.some(k => equipoActual.includes(k));
+            
+            if (isAutoComp) {
+                document.getElementById("equipo").value = subcat.replace(/[\[\]]/g, "");
+            } else if (wasAutoComp) {
+                document.getElementById("equipo").value = "";
+            }
+        }
+    }
+
+    function calcularFormulas() {
+        const subcat = document.getElementById("subcategoria").value;
+        const dimH = parseFloat(document.getElementById("dim-horizontal").value);
+        const dimV = parseFloat(document.getElementById("dim-vertical").value);
+        const esCable20m = subcat.toLowerCase().includes("cable") && subcat.includes("20");
+        const esPulpo = subcat.toLowerCase().includes("pulpo");
+        const esBrazo = subcat.toLowerCase().includes("brazos");
+        const esHamburguesaPitch = subcat.toLowerCase().includes("hamburguesa pantalla pitch");
+        const esArmado = subcat.includes("Armado Completo");
+        
+        // Para patas solo exigimos dimH, para los demás dimH y dimV
+        const isValidDims = (subcat.toLowerCase().includes("patas") || esBrazo) ? (dimH > 0) : (dimH > 0 && dimV > 0);
+        if ((subcat.toLowerCase().includes("pitch") || subcat.toLowerCase().includes("puente") || subcat.toLowerCase().includes("patas") || subcat.toLowerCase().includes("escalerilla") || esCable20m || esPulpo || esBrazo || esHamburguesaPitch || esArmado) && isValidDims) {
+            if (esArmado) {
+                const pitch = document.getElementById("tipo-pitch-cable").value;
+                const divisor = (pitch === "2.6") ? 2 : 1.5;
+                const racks = Math.ceil((dimH * dimV) / divisor);
+                document.getElementById("equipo").value = `Racks de pantalla ${pitch}`;
+                document.getElementById("cantidad").value = racks;
+                document.getElementById("cantidad").readOnly = true;
+            } else
+            
+            
+                        if (esBrazo) {
+                let patas = Math.ceil(((dimH - 1) / 2.5) + 1);
+                if (patas % 2 !== 0) {
+                    patas += 1; // Si es impar, sumamos 1 para que sea par
+                }
+                const totalBrazos = patas / 2;
+
+                const nombreEquipo = subcat.replace(/[\[\]]/g, "");
+                document.getElementById("equipo").value = nombreEquipo;
+                document.getElementById("cantidad").value = totalBrazos;
+                document.getElementById("cantidad").readOnly = true;
+
+            } else if (esPulpo) {
+                const totalCab = (dimH * 2) * (dimV * 2);
+                const totalPulpos = Math.ceil(totalCab / 40);
+
+                const nombreEquipo = subcat.replace(/[\[\]]/g, "");
+                document.getElementById("equipo").value = nombreEquipo;
+                document.getElementById("cantidad").value = totalPulpos;
+                document.getElementById("cantidad").readOnly = true;
+
+            } else if (esCable20m) {
+                const pitchSel = document.getElementById("tipo-pitch-cable").value;
+                const totalCab = (dimH * 2) * (dimV * 2);
+                const divisor = pitchSel === "2.9" ? 20 : 16;
+                const baseRes = totalCab / divisor;
+                let finalRes = 0;
+                
+                if (baseRes >= 10 && baseRes <= 20) {
+                    finalRes = Math.floor(baseRes) + 3;
+                } else if (baseRes > 20) {
+                    finalRes = Math.floor(baseRes) + 4;
+                } else {
+                    finalRes = Math.floor(baseRes) + 1;
+                }
+
+                const nombreEquipo = subcat.replace(/[\[\]]/g, "");
+                document.getElementById("equipo").value = nombreEquipo;
+                document.getElementById("cantidad").value = finalRes;
+                document.getElementById("cantidad").readOnly = true;
+
+            } else if (subcat.toLowerCase().includes("patas")) {
+                const totalPatas = Math.ceil(((dimH - 1) / 2.5) + 1);
+                const nombreEquipo = subcat.replace(/[\[\]]/g, "");
+                document.getElementById("equipo").value = nombreEquipo;
+                document.getElementById("cantidad").value = totalPatas;
+                document.getElementById("cantidad").readOnly = true;
+            } else if (subcat.toLowerCase().includes("escalerilla") || esHamburguesaPitch) {
+                const ensamble = document.getElementById("tipo-ensamble").value;
+                const patas = Math.ceil(((dimH - 1) / 2.5) + 1); // Recalculamos las patas
+                let cantidad = 0;
+                
+                if (ensamble === "tarima") {
+                    // Altura vertical - 1, por patas
+                    const factorVertical = Math.max(0, dimV - 1);
+                    cantidad = Math.ceil(patas * factorVertical);
+                } else if (ensamble === "inferior") {
+                    // Altura vertical - 0.5, por patas
+                    const factorVertical = Math.max(0, dimV - 0.5);
+                    cantidad = Math.ceil(patas * factorVertical);
+                } else {
+                    // Superiores a 60cm
+                    // Altura vertical + 1, por patas
+                    const factorVertical = dimV + 1;
+                    cantidad = Math.ceil(patas * factorVertical);
+                }
+                
+                const nombreEquipo = subcat.replace(/[\[\]]/g, "");
+                document.getElementById("equipo").value = nombreEquipo;
+                document.getElementById("cantidad").value = cantidad;
+                document.getElementById("cantidad").readOnly = true;
+            } else if (subcat.includes("Pantalla LED")) {
+                const area = dimH * dimV;
+                let divisor = subcat.includes("2.6") ? 2 : 1.5;
+                const racks = Math.ceil(area / divisor);
+                const pitch = subcat.includes("2.9") ? "2.9" : "2.6";
+                
+                document.getElementById("equipo").value = `Racks de pantalla ${pitch}`;
+                document.getElementById("cantidad").value = racks;
+                document.getElementById("cantidad").readOnly = true;
+            } 
+            else if (subcat.includes("Puente")) {
+                // Formula base: (H * 2) * (V * 2)
+                let totalCables = Math.ceil((dimH * 2) * (dimV * 2));
+                
+                // Condición: sumar 5 unidades adicionales por cada bloque de 100
+                if (totalCables > 0) {
+                    const extra = Math.ceil(totalCables / 100) * 5;
+                    totalCables += extra;
+                }
+                
+                const nombreEquipo = subcat.replace(/[\[\]]/g, "");
+                document.getElementById("equipo").value = nombreEquipo;
+                document.getElementById("cantidad").value = totalCables;
+                document.getElementById("cantidad").readOnly = true;
+            }
+        } else {
+            document.getElementById("cantidad").readOnly = false;
+        }
+    }
+
+    async function enviarDatos() {
+        const categoria = document.getElementById("categoria").value;
+        let equipo = document.getElementById("equipo").value.trim();
+        const cantidad = document.getElementById("cantidad").value;
+        const subcategoria = document.getElementById("subcategoria").value;
+        const dimHorizontal = document.getElementById("dim-horizontal").value;
+        const dimVertical = document.getElementById("dim-vertical").value;
+        const messageDiv = document.getElementById("message");
+        
+        if (!categoria) {
+            showMessage("Por favor, selecciona una categoría.", false);
+            return;
+        }
+        
+        if (subcategoria.includes("Pantalla LED") || subcategoria.includes("Armado Completo")) {
+            if (!dimHorizontal || !dimVertical) {
+                showMessage("Por favor, ingresa las dimensiones de la pantalla (Horizontal y Vertical).", false);
+                return;
+            }
+        }
+
+        if (!equipo) {
+            showMessage("Por favor, escribe la descripción del equipo.", false);
+            return;
+        }
+        
+        // Si es general (ej. otro tipo de video), agregamos la subcategoría si la tiene
+        if (!subcategoria.includes("Pantalla LED") && categoria === "VIDEO" && !subcategoria.includes("Cable") && subcategoria !== "") {
+            equipo = `${subcategoria} ${equipo}`;
+        }
+
+        if (!cantidad || cantidad < 1) {
+            showMessage("Por favor, ingresa una cantidad válida.", false);
+            return;
+        }
+
+        let data = [];
+        
+        if (subcategoria.includes("Armado Completo")) {
+            const pitch = document.getElementById("tipo-pitch-cable").value;
+            const H = parseFloat(dimHorizontal);
+            const V = parseFloat(dimVertical);
+            const ensamble = document.getElementById("tipo-ensamble").value;
+            
+            // 1. Racks de pantalla (Pitch 2.6 -> divisor 2 | Pitch 2.9 -> divisor 1.5, redondeo hacia arriba)
+            const divisor = (pitch === "2.6") ? 2 : 1.5;
+            const racks = Math.ceil((H * V) / divisor);
+            data.push({
+                categoria: "PANTALLA LED",
+                equipo: `Racks de pantalla ${pitch}`,
+                cantidad: racks
+            });
+
+            // 2. Patas estructura pantalla: (((H - 1) / 2.5) + 1)
+            const patas = Math.ceil(((H - 1) / 2.5) + 1);
+            data.push({
+                categoria: "PANTALLA LED",
+                equipo: "Patas estructura pantalla",
+                cantidad: patas
+            });
+
+            // 3. Brazos Extensores de 2.5 mts: si patas es impar suma 1, luego divide entre 2
+            const patas_par = (patas % 2 !== 0) ? patas + 1 : patas;
+            const brazos = patas_par / 2;
+            data.push({
+                categoria: "PANTALLA LED",
+                equipo: "Brazos Extensores de 2.5 mts",
+                cantidad: brazos
+            });
+
+            // 4. Escalerillas, Hamburguesas y Tornillos
+            if (ensamble !== "ninguna") {
+                let esc = 0;
+                if (ensamble === "tarima") {
+                    esc = Math.ceil(patas * Math.max(0, V - 1));
+                } else if (ensamble === "inferior") {
+                    esc = Math.ceil(patas * Math.max(0, V - 0.5));
+                } else if (ensamble === "superior") {
+                    esc = Math.ceil(patas * (V + 1));
+                }
+                
+                if (esc > 0) {
+                    data.push({ categoria: "PANTALLA LED", equipo: "Escalerilla estructura pantalla", cantidad: esc });
+                    data.push({ categoria: "PANTALLA LED", equipo: `Hamburguesa Pantalla pitch ${pitch}`, cantidad: esc });
+                    data.push({ categoria: "PANTALLA LED", equipo: "Tornillos Pantalla led", cantidad: esc * 4 });
+                }
+            }
+        } else {
+            data.push({
+                categoria: categoria,
+                equipo: equipo,
+                cantidad: parseInt(cantidad)
+            });
+        }
+
+        if (subcategoria.toLowerCase().includes("hamburguesa pantalla pitch") && !subcategoria.includes("Armado Completo")) {
+            data.push({
+                categoria: "PANTALLA LED",
+                equipo: "Tornillos Pantalla led",
+                cantidad: parseInt(cantidad) * 4
+            });
+        }
+
+        try {
+            const response = await fetch('/equipos/batch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                showMessage(`¡"${equipo}" agregado al grupo de ${categoria} con éxito!`, true);
+                // Limpiar el campo del equipo para que puedan agregar el siguiente rápido
+                document.getElementById("equipo").value = "";
+                document.getElementById("cantidad").value = "1";
+                document.getElementById("equipo").focus();
+                
+                // Refrescar la tabla automáticamente
+                cargarTabla();
+            } else {
+                const err = await response.json();
+                showMessage("Error: " + err.detail, false);
+            }
+        } catch (error) {
+            showMessage("Error de conexión con la API.", false);
+        }
+    }
+
+    async function abrirExcel() {
+        try {
+            const response = await fetch('/abrir-excel');
+            if (!response.ok) {
+                const err = await response.json();
+                showMessage("Error: " + err.detail, false);
+            } else {
+                showMessage("Abriendo Excel...", true);
+            }
+        } catch (error) {
+            showMessage("Error de conexión con la API.", false);
+        }
+    }
+
+    function descargarExcel() {
+        window.location.href = '/descargar-excel';
+    }
+
+    function showMessage(text, isSuccess) {
+        const msgDiv = document.getElementById("message");
+        msgDiv.textContent = text;
+        msgDiv.className = isSuccess ? "success" : "error";
+        msgDiv.classList.remove("hidden");
+        setTimeout(() => msgDiv.classList.add("hidden"), 5000);
+    }
+</script>
+
+
+    <div style="position: fixed; bottom: 10px; right: 15px; font-size: 13px; color: #888; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; opacity: 0.8; z-index: 1000; text-shadow: 1px 1px 2px #000;">
+        <i>Powered by <b>PATROCLO</b></i>
+    </div>
+</body>
+</html>
